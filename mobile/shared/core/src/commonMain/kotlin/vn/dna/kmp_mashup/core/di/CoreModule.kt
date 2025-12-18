@@ -102,13 +102,15 @@ val dataModule = module {
 val repositoryModule = module {
     single<AuthRepository> {
         AuthRepositoryImpl(
-            httpClient = get()
+            httpClient = get(),
+            userLocalDataSource = get()
         )
     }
 
     single<UserRepository> {
         UserRepositoryImpl(
             httpClient = get(),
+            localDataSource = get(),
             currentUserHolder = get()
         )
     }

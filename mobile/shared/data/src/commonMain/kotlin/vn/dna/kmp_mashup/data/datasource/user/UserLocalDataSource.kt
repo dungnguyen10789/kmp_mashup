@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import vn.dna.kmp_mashup.data.db.CoreDatabase
 import vn.dna.kmp_mashup.data.db.DatabaseDriverFactory
 import vn.dna.kmp_mashup.domain.entity.user.UserEntity
+import vn.dna.kmpmashup.data.db.User
 
 /**
  * This class is the single point of interaction with the User table in the local database.
@@ -21,16 +22,10 @@ class UserLocalDataSource(driverFactory: DatabaseDriverFactory) {
      * Returns a reactive Flow that emits the current user whenever it changes in the database.
      */
     fun observeUser(): Flow<UserEntity?> {
-        return queries.findCurrentUser() // Correct method name
+        return queries.findCurrentUser()
             .asFlow()
             .mapToOneOrNull(Dispatchers.Default)
-            .map { user -> UserEntity(
-                id = user?.id ?: "",
-                username = user?.username ?: "",
-                fullName = user?.fullName ?: "",
-                email = user?.email ?: "",
-                gender = user?.gender?.toInt() ?: 0
-            ) }
+            .map { user -> user?.toUserEntity() }
     }
 
     /**
@@ -52,4 +47,14 @@ class UserLocalDataSource(driverFactory: DatabaseDriverFactory) {
     fun clear() {
         queries.deleteAll()
     }
+}
+
+private fun User.toUserEntity(): UserEntity {
+    return UserEntity(
+        id = this.id,
+        username = this.username,
+        fullName = this.fullName,
+        email = this.email,
+        gender = this.gender.toInt()
+    )
 }
