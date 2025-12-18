@@ -29,10 +29,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import vn.dna.kmp_mashup.domain.entity.user.UserEntity
 import vn.dna.kmp_mashup.domain.usecase.auth.BootstrapAppUseCase
 import vn.dna.kmp_mashup.domain.usecase.auth.LogoutUseCase
 import vn.dna.kmp_mashup.domain.usecase.user.GetMyProfileUseCase
 import vn.dna.kmp_mashup.domain.usecase.user.GetUserProfileUseCase
+import vn.dna.kmp_mashup.domain.usecase.user.ObserveMyProfileUseCase
 import vn.dna.kmp_mashup.presentation.auth.AppEffect
 import vn.dna.kmp_mashup.presentation.auth.AppStore
 import vn.dna.kmp_mashup.presentation.auth.AppState
@@ -43,6 +45,7 @@ private class RootDeps : KoinComponent {
     val logoutUseCase: LogoutUseCase by inject()
     val getMyProfileUseCase: GetMyProfileUseCase by inject()
     val getUserProfileUseCase: GetUserProfileUseCase by inject()
+    val observeMyProfileUseCase: ObserveMyProfileUseCase by inject()
     val appStore: AppStore by inject()
 }
 
@@ -54,6 +57,9 @@ fun RootFlows() {
     // Subscribe to global AppState from DI
     val appState by deps.appStore.appState.collectAsState()
     
+    // Subscribe to User Profile from CurrentUserHolder (RAM)
+    val currentUser by deps.observeMyProfileUseCase().collectAsState(initial = null)
+
     var statusMessage by remember { mutableStateOf("Ready") }
 
     // One-shot effects (toast/alert)
@@ -73,8 +79,6 @@ fun RootFlows() {
     }
 
     // Trigger bootstrap ONLY ONCE when app starts.
-    // The AppStore initializes with Bootstrapping state.
-    // We can simulate a minimum splash time here if desired, or just let bootstrapper finish.
     LaunchedEffect(Unit) {
         scope.launchCatching(
              block = { 
@@ -85,7 +89,6 @@ fun RootFlows() {
              },
              onFailure = {
                  statusMessage = "Boot failed: ${it.message}"
-                 // Fallback to Unauthenticated if boot fails severely
                  deps.appStore.setUnauthenticated(showMessage = "Boot failed: ${it.message}")
              }
         )
@@ -102,6 +105,7 @@ fun RootFlows() {
             is AppState.Authenticated -> {
                 MainFlow(
                     status = statusMessage,
+                    currentUser = currentUser, // Pass the reactive user entity
                     onLogout = {
                         scope.launchCatching(
                             block = { deps.logoutUseCase.invoke(params = Unit) },
@@ -111,9 +115,9 @@ fun RootFlows() {
                     onGetMyProfile = {
                         scope.launchCatching(
                             onLoading = { statusMessage = "Loading Profile..." },
-                            block = { deps.getMyProfileUseCase .invoke(params = Unit) },
-                            onSuccess = { user ->
-                                statusMessage = "User: ${user.fullName} (${user.email})"
+                            block = { deps.getMyProfileUseCase.invoke() },
+                            onSuccess = { 
+                                // No need to update status manually, UI updates automatically via currentUser
                             },
                             onFailure = { e ->
                                 statusMessage = "Error: ${e.message}"
@@ -121,13 +125,10 @@ fun RootFlows() {
                         )
                     },
                     onGetUserProfile = {
+                        // Keep this for testing getting other users if needed
                         scope.launchCatching(
-                            onLoading = { statusMessage = "Loading Profile..." },
                             block = { deps.getUserProfileUseCase.invoke(params = "0762a8e1-38d9-4450-8efe-eee362a36c87") },
-                            onSuccess = { user ->
-                            },
-                            onFailure = { e ->
-                            }
+                            onFailure = { e -> }
                         )
                     }
                 )
@@ -136,6 +137,7 @@ fun RootFlows() {
     }
 }
 
+// ... BootstrapFlow and AuthFlow remain same ...
 @Composable
 fun BootstrapFlow(status: String) {
     Box(
@@ -161,7 +163,6 @@ fun BootstrapFlow(status: String) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Spacer(Modifier.height(8.dp))
-            // Show detailed status for debugging
             Text(
                 text = status,
                 style = MaterialTheme.typography.bodySmall,
@@ -178,7 +179,6 @@ fun AuthFlow(status: String) {
         Spacer(Modifier.height(8.dp))
         Text("Status: $status")
         Spacer(Modifier.height(12.dp))
-        // Reuse existing sample UI (login/logout buttons etc.)
         App()
     }
 }
@@ -186,24 +186,38 @@ fun AuthFlow(status: String) {
 @Composable
 fun MainFlow(
     status: String, 
+    currentUser: UserEntity?, // New Parameter
     onLogout: () -> Unit,
     onGetMyProfile: () -> Unit,
     onGetUserProfile: () -> Unit
 ) {
-    // Automatically fetch profile when entering MainFlow
+    // Automatically fetch profile when entering MainFlow.
+    // This updates the DB -> Holder -> currentUser State
     LaunchedEffect(Unit) {
         onGetMyProfile()
-        onGetUserProfile()
     }
 
     Column(Modifier.safeContentPadding()) {
-        Text("MainFlow")
-        Spacer(Modifier.height(8.dp))
-        Text("Status: $status")
+        Text("MainFlow - Welcome Back!", style = MaterialTheme.typography.headlineSmall)
+        
+        Spacer(Modifier.height(16.dp))
+
+        // Display User Info from Reactive Cache
+        if (currentUser != null) {
+            Text("User: ${currentUser.fullName}")
+            Text("Email: ${currentUser.email}")
+            Text("ID: ${currentUser.id}")
+        } else {
+            Text("User data not loaded yet...")
+            CircularProgressIndicator()
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Text("Status Log: $status", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(12.dp))
         
         Button(modifier = Modifier.fillMaxWidth(), onClick = onGetMyProfile) {
-            Text("Get My Profile (Retry)")
+            Text("Refresh Profile (API -> DB -> UI)")
         }
         
         Spacer(Modifier.height(8.dp))

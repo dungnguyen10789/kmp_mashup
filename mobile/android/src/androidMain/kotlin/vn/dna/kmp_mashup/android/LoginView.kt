@@ -26,7 +26,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import vn.dna.kmp_mashup.domain.config.AppConfig
-import vn.dna.kmp_mashup.domain.model.auth.LoginCredentials
+import vn.dna.kmp_mashup.domain.model.auth.LoginRequest
 import vn.dna.kmp_mashup.domain.model.error.Failure
 import vn.dna.kmp_mashup.domain.usecase.auth.LoginUseCase
 import vn.dna.kmp_mashup.domain.usecase.auth.LogoutUseCase
@@ -92,7 +92,7 @@ fun App() {
                         try {
                             // invoke now returns R directly, or throws exception on failure
                             deps.loginUseCase.invoke(
-                                LoginCredentials(username = username, password = password)
+                                LoginRequest(username = username, password = password)
                             )
                             // Success path
                             println("LOGIN_SUCCESS")

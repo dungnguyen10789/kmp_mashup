@@ -45,6 +45,8 @@ serializationJson = "1.7.3"
 skie = "0.10.0" 
 # Settings: Key-Value storage (SharedPreferences/NSUserDefaults wrapper).
 multiplatformSettings = "1.2.0"
+# SQLDelight: Database for KMP
+sqldelight = "2.0.0"
 
 # --- BACKEND SPECIFIC VERSIONS ---
 # Exposed: Light-weight SQL ORM framework for Kotlin.
@@ -77,6 +79,11 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
 # Android Security (Used in androidMain sourceSet for secure storage impl)
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
+
+# Database (SQLDelight)
+sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
+sqldelight-coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 
 # Coroutines & Serialization
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -155,3 +162,4 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 touchlabSkie = { id = "co.touchlab.skie", version.ref = "skie" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }

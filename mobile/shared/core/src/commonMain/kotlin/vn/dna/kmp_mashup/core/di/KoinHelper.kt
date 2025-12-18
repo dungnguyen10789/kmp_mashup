@@ -2,6 +2,7 @@ package vn.dna.kmp_mashup.core.di
 
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
+import vn.dna.kmp_mashup.data.cache.CurrentUserHolder
 import vn.dna.kmp_mashup.data.storage.SecureStorage
 import vn.dna.kmp_mashup.domain.config.Environment
 
@@ -27,3 +28,6 @@ fun initKoin(environment: Environment, appDeclaration: KoinApplication.() -> Uni
 
 // Export SecureStorage to Native (iOS/Android) via KoinHelper
 fun getSecureStorage(): SecureStorage = KoinHolder.koin.get()
+
+// Export CurrentUserHolder to Native (iOS/Android) via KoinHelper
+fun getCurrentUserHolder(): CurrentUserHolder = KoinHolder.koin.get()

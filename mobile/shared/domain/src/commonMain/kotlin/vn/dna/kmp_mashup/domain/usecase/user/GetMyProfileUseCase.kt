@@ -36,4 +36,6 @@ class GetMyProfileUseCase(
             // 5) If we don't throw, the error is preserved and returned to presentation layer.
         }
     }
+
+    suspend operator fun invoke() = invoke(Unit)
 }

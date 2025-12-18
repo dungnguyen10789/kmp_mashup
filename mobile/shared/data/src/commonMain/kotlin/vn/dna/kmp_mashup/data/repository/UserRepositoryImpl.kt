@@ -2,6 +2,8 @@ package vn.dna.kmp_mashup.data.repository
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import kotlinx.coroutines.flow.Flow
+import vn.dna.kmp_mashup.data.cache.CurrentUserHolder
 import vn.dna.kmp_mashup.domain.entity.user.UserEntity
 import vn.dna.kmp_mashup.domain.repository.user.UserRepository
 import vn.dna.kmp_mashup.dto.user.UserDTO
@@ -13,7 +15,8 @@ import vn.dna.kmp_mashup.dto.user.UserDTO
  * It extends [BaseRepositoryImpl] to leverage centralized error handling (safeApiCall).
  */
 class UserRepositoryImpl(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val currentUserHolder: CurrentUserHolder
 ) : UserRepository, BaseRepositoryImpl() {
 
     /**
@@ -31,9 +34,9 @@ class UserRepositoryImpl(
             // only require changes in this mapping logic, not the whole app.
             UserEntity(
                 id = dto.id,
+                email = dto.email,
                 username = dto.username,
                 fullName = dto.fullname,
-                email = dto.email,
                 gender = dto.gender
             )
         }
@@ -54,5 +57,9 @@ class UserRepositoryImpl(
                 gender = dto.gender
             )
         }
+    }
+
+    override fun observeMyProfile(): Flow<UserEntity?> {
+        return currentUserHolder.userFlow
     }
 }

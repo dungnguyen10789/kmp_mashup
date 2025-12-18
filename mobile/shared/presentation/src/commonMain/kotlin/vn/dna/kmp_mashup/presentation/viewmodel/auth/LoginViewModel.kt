@@ -3,7 +3,7 @@ package vn.dna.kmp_mashup.presentation.viewmodel.auth
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import vn.dna.kmp_mashup.domain.model.auth.LoginCredentials
+import vn.dna.kmp_mashup.domain.model.auth.LoginRequest
 import vn.dna.kmp_mashup.domain.usecase.auth.LoginUseCase
 import vn.dna.kmp_mashup.presentation.navigation.NavEffect
 import vn.dna.kmp_mashup.presentation.viewmodel.base.BaseViewModel
@@ -30,7 +30,7 @@ class LoginViewModel(
             try {
                 // invoke now returns R directly, or throws exception on failure
                 loginUseCase.invoke(
-                    LoginCredentials(
+                    LoginRequest(
                         username = username,
                         password = password
                     )

@@ -1,0 +1,18 @@
+CREATE TABLE User (
+    id TEXT NOT NULL PRIMARY KEY,
+    username TEXT NOT NULL,
+    fullName TEXT NOT NULL,
+    email TEXT NOT NULL,
+    gender INTEGER NOT NULL
+);
+
+-- Renamed from selectAll to findCurrentUser for clarity and correctness
+findCurrentUser: 
+SELECT * FROM User LIMIT 1;
+
+insertUser:
+INSERT OR REPLACE INTO User(id, username, fullName, email, gender)
+VALUES (?, ?, ?, ?, ?);
+
+deleteAll:
+DELETE FROM User;
