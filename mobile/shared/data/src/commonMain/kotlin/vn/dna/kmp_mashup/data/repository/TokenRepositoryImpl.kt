@@ -8,6 +8,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.doubleOrNull
 import vn.dna.kmp_mashup.domain.auth.AuthNotifier
 import vn.dna.kmp_mashup.domain.entity.auth.TokenEntity
 import vn.dna.kmp_mashup.domain.repository.auth.TokenRepository
@@ -30,7 +33,7 @@ import kotlinx.datetime.Clock
 class TokenRepositoryImpl(
     private val storage: SecureStorage,
     private val authNotifier: AuthNotifier,
-    private val refreshTokenGateway: RefreshTokenGateway 
+    private val refreshTokenGateway: RefreshTokenGateway
 ) : TokenRepository, BaseRepositoryImpl() {
 
     @Volatile
@@ -41,6 +44,9 @@ class TokenRepositoryImpl(
 
     companion object {
         private const val KEY_REFRESH_TOKEN = "auth_refresh_token"
+        // Buffer time to refresh token before it actually expires.
+        // Reduced from 300s to 15s to avoid "always expired" loop with short-lived tokens.
+        private const val EXPIRATION_BUFFER_SECONDS = 300
     }
 
     override suspend fun getAccessToken(): String? = inMemoryAccessToken
@@ -59,6 +65,7 @@ class TokenRepositoryImpl(
 
     override suspend fun ensureValidAccessToken(): String? {
         val current = inMemoryAccessToken
+        // Check if we have a token and if it's still valid (with a small buffer)
         if (current != null && !isAccessTokenExpired(current)) return current
 
         val refreshToken = getRefreshToken() ?: return null
@@ -104,13 +111,19 @@ class TokenRepositoryImpl(
         try {
             val payload = accessToken.split(".")[1]
             val decoded = payload.decodeBase64Bytes()
-            val json = decoded.decodeToString()
-            val map = Json.decodeFromString<Map<String, Any>>(json)
-            val exp = map["exp"] as? Long ?: return true
+            val jsonString = decoded.decodeToString()
+            
+            // Use JsonObject/JsonElement instead of Map<String, Any> which causes SerializationException
+            val jsonElement = Json.parseToJsonElement(jsonString)
+            val jsonObject = jsonElement.jsonObject
+            
+            // Extract "exp" safely
+            val exp = jsonObject["exp"]?.jsonPrimitive?.doubleOrNull?.toLong() ?: return true
 
-            // KMP time: Clock.System.now().epochSeconds
             val currentEpoch = Clock.System.now().epochSeconds
-            return currentEpoch >= exp - 300 // Refresh 5 minutes exp
+            
+            // If current time is close to expiration (within buffer), consider it expired.
+            return currentEpoch >= exp - EXPIRATION_BUFFER_SECONDS
         } catch (e: Exception) {
             return true // Parse failed → assume as expired to safety refresh
         }

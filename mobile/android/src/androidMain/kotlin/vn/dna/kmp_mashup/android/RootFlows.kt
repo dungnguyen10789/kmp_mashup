@@ -123,7 +123,7 @@ fun RootFlows() {
                     onGetUserProfile = {
                         scope.launchCatching(
                             onLoading = { statusMessage = "Loading Profile..." },
-                            block = { deps.getUserProfileUseCase.invoke(params = "853ddfef-6479-421b-8946-905ec4ed22df") },
+                            block = { deps.getUserProfileUseCase.invoke(params = "0762a8e1-38d9-4450-8efe-eee362a36c87") },
                             onSuccess = { user ->
                             },
                             onFailure = { e ->
