@@ -1,0 +1,155 @@
+# gradle/libs.versions.toml
+# This file serves as the Single Source of Truth for all dependencies and versions
+# used across the entire project (Mobile App, Shared Library, Backend).
+
+[versions]
+# --- CORE BUILD VERSIONS ---
+# Android Gradle Plugin: Controls Android build process.
+agp = "8.11.2"
+# Kotlin: The language version. 2.1.0 is stable and supports K2 compiler.
+kotlin = "2.1.0" 
+
+# --- ANDROID SDK CONFIGURATION ---
+# These are used by 'KmpLibraryConventionPlugin' to standardize Android modules.
+android-compileSdk = "36" # API 36 (Android 15)
+android-minSdk = "24"     # API 24 (Android 7.0) - Reasonable minimum for modern apps.
+android-targetSdk = "36"
+
+# --- ANDROIDX / JETPACK LIBRARIES ---
+androidx-activity = "1.12.0"
+androidx-appcompat = "1.7.1"
+androidx.core = "1.17.0"
+androidx-lifecycle = "2.10.0" 
+androidx-navigation = "2.7.5"
+androidx-activity-compose = "1.8.2"
+# Security Crypto: Used for EncryptedSharedPreferences (secure storage).
+androidx-security-crypto = "1.1.0-alpha06"
+
+# --- COMPOSE UI ---
+# Compose Multiplatform: Jetbrains' fork of Compose for iOS/Desktop.
+composeMultiplatform = "1.7.1" 
+# Android-specific Compose libraries usually follow BOM or specific versions.
+compose = "1.5.4" 
+
+# --- KOTLIN MULTIPLATFORM LIBRARIES ---
+# Ktor: Asynchronous framework for Client (Mobile) and Server (Backend).
+ktor = "3.0.1"
+# Coroutines: Concurrency framework.
+coroutines = "1.9.0"
+# Koin: Dependency Injection framework (Kotlin native, no code gen).
+koin = "4.0.0" 
+# Serialization: JSON parsing.
+serializationJson = "1.7.3"
+# Skie: Swift-Kotlin Interface Enhancer. Makes Kotlin flows/enums nicer in Swift.
+skie = "0.10.0" 
+# Settings: Key-Value storage (SharedPreferences/NSUserDefaults wrapper).
+multiplatformSettings = "1.2.0"
+
+# --- BACKEND SPECIFIC VERSIONS ---
+# Exposed: Light-weight SQL ORM framework for Kotlin.
+exposed = "0.56.0"
+# PostgreSQL: JDBC Driver for Postgres database.
+postgresql = "42.7.2"
+# HikariCP: High-performance JDBC Connection Pool.
+hikaricp = "5.1.0"
+# Logback: Logging implementation (SLF4J).
+logback = "1.4.14"
+
+# --- TESTING ---
+junit = "4.13.2"
+androidx-espresso = "3.7.0"
+androidx-testExt = "1.3.0"
+
+
+[libraries]
+# ==============================================================================
+# GRADLE PLUGINS (Dependencies for buildLogic)
+# ==============================================================================
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+
+# ==============================================================================
+# KMP COMMON LIBRARIES (Mobile Shared)
+# ==============================================================================
+# Storage
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
+# Android Security (Used in androidMain sourceSet for secure storage impl)
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
+
+# Coroutines & Serialization
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationJson" }
+
+# Dependency Injection
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+
+# ==============================================================================
+# KTOR CLIENT (Mobile Networking)
+# ==============================================================================
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+# Engines (Platform specific)
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" } # Android Engine
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" } # iOS Engine
+
+# ==============================================================================
+# KTOR SERVER (Backend)
+# ==============================================================================
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" } # Netty Engine
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt-jvm", version.ref = "ktor" } # JWT support
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+
+# ==============================================================================
+# DATABASE (Backend)
+# ==============================================================================
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# ==============================================================================
+# ANDROID UI & NAVIGATION
+# ==============================================================================
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+# ==============================================================================
+# TESTING
+# ==============================================================================
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[bundles]
+# Grouping common dependencies to cleaner build scripts
+ktor-common = [
+    "ktor-client-core",
+    "ktor-client-content-negotiation",
+    "ktor-serialization-kotlinx-json"
+]
+
+[plugins]
+# ==============================================================================
+# PLUGIN DEFINITIONS
+# ==============================================================================
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+touchlabSkie = { id = "co.touchlab.skie", version.ref = "skie" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }

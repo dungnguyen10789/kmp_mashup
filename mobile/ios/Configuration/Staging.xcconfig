@@ -1,0 +1,8 @@
+#include "Base.xcconfig"
+
+ENV=STAGING
+
+APP_DISPLAY_NAM=Mashup Staging
+PRODUCT_BUNDLE_IDENTIFIER=vn.dnas.mashup.staging
+
+DEEPLINK_PREFIX = mashup-staging

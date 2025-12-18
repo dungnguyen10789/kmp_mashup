@@ -1,0 +1,8 @@
+#include "Base.xcconfig"
+
+ENV=DEV
+
+APP_DISPLAY_NAM=Mashup Dev
+PRODUCT_BUNDLE_IDENTIFIER=vn.dnas.mashup.dev
+
+DEEPLINK_PREFIX = mashup-dev

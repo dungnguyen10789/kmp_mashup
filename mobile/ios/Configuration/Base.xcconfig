@@ -1,0 +1,5 @@
+// Common build settings shared across all environments
+
+// Versioning
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
