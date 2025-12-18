@@ -22,30 +22,28 @@ class BootstrapAppUseCase(
 
     /**
      * Executes the bootstrap logic.
-     * - Checks for a refresh token.
-     * - If it exists, attempts to refresh the session to validate it.
-     * - Updates the global authentication state accordingly.
+     * 
+     * Improved Logic for Chat App:
+     * 1. Checks if a valid Access Token exists (RAM or Disk).
+     * 2. If yes, considers Authenticated immediately (No Network Call).
+     * 3. If no (expired/missing), attempts to refresh.
+     * 4. If refresh fails, considers Unauthenticated.
      */
     override suspend fun execute(params: Unit): Result<BootstrapResult> {
-        val refreshToken = tokenRepository.getRefreshToken()
+        // ensureValidAccessToken() handles the "Smart Check":
+        // - Checks SecureStorage first.
+        // - If valid -> returns token (Fast start, No API).
+        // - If expired -> calls API Refresh Token.
+        val accessToken = tokenRepository.ensureValidAccessToken()
 
-        return if (refreshToken.isNullOrBlank()) {
-            // No refresh token, user is definitely not logged in.
+        return if (accessToken != null) {
+            // Valid session found (either from cache or fresh refresh)
+            authNotifier.setAuthenticated(userId = null)
+            Result.success(BootstrapResult.Authenticated)
+        } else {
+            // No valid session could be established
             authNotifier.setUnauthenticated()
             Result.success(BootstrapResult.Unauthenticated)
-        } else {
-            // Refresh token exists, try to refresh the access token to validate the session.
-            val refreshResult = tokenRepository.refreshAfterUnauthorized()
-            
-            if (refreshResult.isSuccess) {
-                // Refresh successful, user is authenticated.
-                authNotifier.setAuthenticated(userId = null)
-                Result.success(BootstrapResult.Authenticated)
-            } else {
-                // Refresh failed (e.g., token expired), user must log in again.
-                authNotifier.setUnauthenticated("Session expired")
-                Result.success(BootstrapResult.Unauthenticated)
-            }
         }
     }
 

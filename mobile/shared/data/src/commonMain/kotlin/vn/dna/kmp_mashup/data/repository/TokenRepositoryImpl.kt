@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
@@ -25,10 +26,10 @@ import kotlinx.datetime.Clock
  *
  * This repository is the Single Source of Truth for authentication tokens in the app.
  * It manages:
- * 1. **In-Memory Caching**: Keeps the Access Token in memory for fast access and security (avoiding frequent disk reads).
- * 2. **Secure Persistence**: Stores the Refresh Token persistently using [SecureStorage] (EncryptedSharedPreferences on Android, Keychain on iOS).
- * 3. **Token Refresh Logic**: Implements "Single-Flight" logic to ensure that if multiple API calls fail with 401 simultaneously,
- *    only ONE refresh request is sent to the server.
+ * 1. **In-Memory Caching**: Keeps the Access Token in memory for fast access.
+ * 2. **Secure Persistence**: Stores BOTH Refresh Token AND Access Token persistently using [SecureStorage].
+ *    This optimizes app startup for Chat Apps by avoiding unnecessary refresh calls if the Access Token is still valid.
+ * 3. **Token Refresh Logic**: Implements "Single-Flight" logic.
  */
 class TokenRepositoryImpl(
     private val storage: SecureStorage,
@@ -44,30 +45,58 @@ class TokenRepositoryImpl(
 
     companion object {
         private const val KEY_REFRESH_TOKEN = "auth_refresh_token"
+        private const val KEY_ACCESS_TOKEN = "auth_access_token"
+        
         // Buffer time to refresh token before it actually expires.
-        // Reduced from 300s to 15s to avoid "always expired" loop with short-lived tokens.
-        private const val EXPIRATION_BUFFER_SECONDS = 300
+        // Reduced to 15s to avoid unnecessary refreshes during cold start or shortly after login.
+        private const val EXPIRATION_BUFFER_SECONDS = 15
     }
 
-    override suspend fun getAccessToken(): String? = inMemoryAccessToken
+    override suspend fun getAccessToken(): String? {
+        // Try memory first, then fallback to storage (and cache it if found)
+        return inMemoryAccessToken ?: storage.getString(KEY_ACCESS_TOKEN)?.also {
+            inMemoryAccessToken = it
+        }
+    }
 
     override suspend fun getRefreshToken(): String? = storage.getString(KEY_REFRESH_TOKEN)
 
     override suspend fun saveTokens(accessToken: String, refreshToken: String) {
         inMemoryAccessToken = accessToken
+        // Save BOTH tokens to SecureStorage
+        storage.putString(KEY_ACCESS_TOKEN, accessToken)
         storage.putString(KEY_REFRESH_TOKEN, refreshToken)
     }
 
     override suspend fun clearTokens() {
         inMemoryAccessToken = null
+        // Remove BOTH tokens
+        storage.remove(KEY_ACCESS_TOKEN)
         storage.remove(KEY_REFRESH_TOKEN)
     }
 
+    /**
+     * Ensures a valid access token exists.
+     * Strategy:
+     * 1. Check Memory.
+     * 2. Check Storage (Optimized for App Restart).
+     * 3. If invalid/expired -> Call Refresh Token API.
+     */
     override suspend fun ensureValidAccessToken(): String? {
-        val current = inMemoryAccessToken
-        // Check if we have a token and if it's still valid (with a small buffer)
+        // 1. Check Memory
+        var current = inMemoryAccessToken
         if (current != null && !isAccessTokenExpired(current)) return current
 
+        // 2. Check Storage (Fast Path: App Restart)
+        current = storage.getString(KEY_ACCESS_TOKEN)
+        if (current != null && !isAccessTokenExpired(current)) {
+            // Found valid token in storage -> Load to memory and return immediately.
+            // No network call needed!
+            inMemoryAccessToken = current
+            return current
+        }
+
+        // 3. Fallback: Token missing or expired -> Must refresh via Network
         val refreshToken = getRefreshToken() ?: return null
         return refreshSingleFlight(refreshToken).getOrNull()?.accessToken
     }
@@ -113,19 +142,17 @@ class TokenRepositoryImpl(
             val decoded = payload.decodeBase64Bytes()
             val jsonString = decoded.decodeToString()
             
-            // Use JsonObject/JsonElement instead of Map<String, Any> which causes SerializationException
+            // Use JsonObject/JsonElement parsing (Safe)
             val jsonElement = Json.parseToJsonElement(jsonString)
             val jsonObject = jsonElement.jsonObject
             
-            // Extract "exp" safely
             val exp = jsonObject["exp"]?.jsonPrimitive?.doubleOrNull?.toLong() ?: return true
 
             val currentEpoch = Clock.System.now().epochSeconds
-            
-            // If current time is close to expiration (within buffer), consider it expired.
             return currentEpoch >= exp - EXPIRATION_BUFFER_SECONDS
         } catch (e: Exception) {
-            return true // Parse failed → assume as expired to safety refresh
+            println("TokenRepository: Check Expiration Failed: $e")
+            return true 
         }
     }
 }
