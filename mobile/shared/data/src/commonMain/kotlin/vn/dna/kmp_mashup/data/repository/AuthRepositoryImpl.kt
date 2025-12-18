@@ -11,7 +11,7 @@ import vn.dna.kmp_mashup.dto.auth.TokenDTO
 
 class AuthRepositoryImpl(
     private val httpClient: HttpClient,
-    private val userLocalDataSource: UserLocalDataSource // Inject LocalDataSource
+    private val userLocalDataSource: UserLocalDataSource
 ) : BaseRepositoryImpl(), AuthRepository {
 
     override suspend fun login(request: LoginRequest): Result<TokenEntity> {

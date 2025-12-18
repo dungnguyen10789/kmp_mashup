@@ -26,7 +26,7 @@ abstract class BaseRepositoryImpl {
      *
      * It expects the API to return a standard envelope structure [ApiResponseDTO].
      *
-     * @param T The expected type of the `data` field in the API response.
+     * @param T The expected type of the  `data` field in the API response.
      * @param apiCall A lambda representing the suspending Ktor network request.
      * @return A [Result] containing the parsed data [T] or a mapped [FailureException].
      */
