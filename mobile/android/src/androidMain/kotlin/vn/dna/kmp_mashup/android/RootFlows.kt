@@ -31,6 +31,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import vn.dna.kmp_mashup.domain.usecase.auth.BootstrapAppUseCase
 import vn.dna.kmp_mashup.domain.usecase.auth.LogoutUseCase
+import vn.dna.kmp_mashup.domain.usecase.user.GetMyProfileUseCase
 import vn.dna.kmp_mashup.domain.usecase.user.GetUserProfileUseCase
 import vn.dna.kmp_mashup.presentation.auth.AppEffect
 import vn.dna.kmp_mashup.presentation.auth.AppStore
@@ -40,6 +41,7 @@ import vn.dna.kmp_mashup.presentation.auth.AppState
 private class RootDeps : KoinComponent {
     val bootstrapAppUseCase: BootstrapAppUseCase by inject()
     val logoutUseCase: LogoutUseCase by inject()
+    val getMyProfileUseCase: GetMyProfileUseCase by inject()
     val getUserProfileUseCase: GetUserProfileUseCase by inject()
     val appStore: AppStore by inject()
 }
@@ -102,19 +104,29 @@ fun RootFlows() {
                     status = statusMessage,
                     onLogout = {
                         scope.launchCatching(
-                            block = { deps.logoutUseCase.invoke() },
+                            block = { deps.logoutUseCase.invoke(params = Unit) },
                             onFailure = { /* Ignore logout errors */ }
                         )
                     },
-                    onGetProfile = {
+                    onGetMyProfile = {
                         scope.launchCatching(
                             onLoading = { statusMessage = "Loading Profile..." },
-                            block = { deps.getUserProfileUseCase.invoke() },
+                            block = { deps.getMyProfileUseCase .invoke(params = Unit) },
                             onSuccess = { user ->
                                 statusMessage = "User: ${user.fullName} (${user.email})"
                             },
                             onFailure = { e ->
                                 statusMessage = "Error: ${e.message}"
+                            }
+                        )
+                    },
+                    onGetUserProfile = {
+                        scope.launchCatching(
+                            onLoading = { statusMessage = "Loading Profile..." },
+                            block = { deps.getUserProfileUseCase.invoke(params = "853ddfef-6479-421b-8946-905ec4ed22df") },
+                            onSuccess = { user ->
+                            },
+                            onFailure = { e ->
                             }
                         )
                     }
@@ -175,11 +187,13 @@ fun AuthFlow(status: String) {
 fun MainFlow(
     status: String, 
     onLogout: () -> Unit,
-    onGetProfile: () -> Unit
+    onGetMyProfile: () -> Unit,
+    onGetUserProfile: () -> Unit
 ) {
     // Automatically fetch profile when entering MainFlow
     LaunchedEffect(Unit) {
-        onGetProfile()
+        onGetMyProfile()
+        onGetUserProfile()
     }
 
     Column(Modifier.safeContentPadding()) {
@@ -188,7 +202,7 @@ fun MainFlow(
         Text("Status: $status")
         Spacer(Modifier.height(12.dp))
         
-        Button(modifier = Modifier.fillMaxWidth(), onClick = onGetProfile) {
+        Button(modifier = Modifier.fillMaxWidth(), onClick = onGetMyProfile) {
             Text("Get My Profile (Retry)")
         }
         

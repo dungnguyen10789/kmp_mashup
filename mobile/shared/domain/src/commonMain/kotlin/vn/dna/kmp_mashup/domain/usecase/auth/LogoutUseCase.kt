@@ -17,15 +17,9 @@ class LogoutUseCase(
      * 3. Notifies the app of the state change.
      */
     override suspend fun execute(params: Unit): Result<Unit> {
-        // The result of the API call is ignored. We always clear local data.
         repository.logout()
-
-        // CRITICAL: Always clear local tokens and notify the app state.
         tokenRepository.clearTokens()
         authNotifier.setUnauthenticated()
-
         return Result.success(Unit)
     }
-
-    suspend operator fun invoke() = invoke(Unit)
 }

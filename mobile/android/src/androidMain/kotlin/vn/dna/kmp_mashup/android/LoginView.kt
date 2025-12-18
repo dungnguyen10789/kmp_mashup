@@ -135,7 +135,7 @@ fun App() {
                         // Use the LogoutUseCase from Koin to ensure all logic (API call, clearing tokens) is handled correctly.
                         status = "Logging out..."
                         try {
-                            deps.logoutUseCase.invoke()
+                            deps.logoutUseCase.invoke(params = Unit)
                             println("LOGOUT_SUCCESS")
                             status = "Logout success"
                         } catch (t: Throwable) {

@@ -7,7 +7,8 @@
 # Android Gradle Plugin: Controls Android build process.
 agp = "8.11.2"
 # Kotlin: The language version. 2.1.0 is stable and supports K2 compiler.
-kotlin = "2.1.0" 
+kotlin = "2.1.0"
+kotlinx-datetime = "0.6.1"
 
 # --- ANDROID SDK CONFIGURATION ---
 # These are used by 'KmpLibraryConventionPlugin' to standardize Android modules.
@@ -67,6 +68,7 @@ androidx-testExt = "1.3.0"
 # ==============================================================================
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 # ==============================================================================
 # KMP COMMON LIBRARIES (Mobile Shared)

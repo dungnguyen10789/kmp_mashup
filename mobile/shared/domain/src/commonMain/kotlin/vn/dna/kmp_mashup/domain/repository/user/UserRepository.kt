@@ -19,4 +19,6 @@ interface UserRepository {
      * @return A [Result] containing the [UserEntity] on success, or an exception on failure.
      */
     suspend fun getMyProfile(): Result<UserEntity>
+
+    suspend fun getUserProfile(id: String): Result<UserEntity>
 }

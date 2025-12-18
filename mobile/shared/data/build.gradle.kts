@@ -9,6 +9,9 @@ kotlin {
             api(projects.mobile.shared.domain)
             implementation(projects.commonApi)
 
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
+
             implementation(libs.bundles.ktor.common)
             implementation(libs.ktor.client.auth)
             implementation(libs.ktor.client.logging)
@@ -22,6 +25,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

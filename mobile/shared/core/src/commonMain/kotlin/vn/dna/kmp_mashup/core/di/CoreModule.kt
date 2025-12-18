@@ -18,6 +18,7 @@ import vn.dna.kmp_mashup.domain.repository.auth.AuthRepository
 import vn.dna.kmp_mashup.domain.repository.auth.TokenRepository
 import vn.dna.kmp_mashup.domain.repository.user.UserRepository
 import vn.dna.kmp_mashup.data.storage.KeyValueStorage
+import vn.dna.kmp_mashup.data.storage.SecureStorage
 import vn.dna.kmp_mashup.domain.usecase.auth.BootstrapAppUseCase
 import vn.dna.kmp_mashup.domain.usecase.auth.LoginUseCase
 import vn.dna.kmp_mashup.domain.usecase.auth.LogoutUseCase
@@ -28,6 +29,7 @@ import vn.dna.kmp_mashup.domain.service.NotificationService
 import vn.dna.kmp_mashup.core.service.NotificationServiceImpl
 import vn.dna.kmp_mashup.data.network.gateway.RefreshTokenGatewayImpl
 import vn.dna.kmp_mashup.domain.gateway.auth.RefreshTokenGateway
+import vn.dna.kmp_mashup.domain.usecase.user.GetMyProfileUseCase
 
 // Platform-specific module (OkHttp/Darwin engine)
 expect fun platformNetworkModule(): Module
@@ -42,6 +44,9 @@ expect val platformServiceModule: Module
 val commonStorageModule = module {
     // This provides our abstracted storage service
     single<KeyValueStorage> { KeyValueStorageImpl(settings = get()) }
+    
+    // Provide SecureStorage (Exported to DI graph, accessible by Native via KoinHelper)
+    single { SecureStorage() }
 }
 
 val dataModule = module {
@@ -67,7 +72,7 @@ val dataModule = module {
     // Depends on RefreshTokenGateway to execute the refresh logic on the server side.
     single<TokenRepository> {
         TokenRepositoryImpl(
-            storage = get(),
+            storage = get<SecureStorage>(), // Explicit type to fix inference error
             authNotifier = get(),
             refreshTokenGateway = get()
         )
@@ -93,13 +98,14 @@ val repositoryModule = module {
 }
 
 val useCaseModule = module {
+    // Logic for app startup
+    factory { BootstrapAppUseCase(tokenRepository = get(), authNotifier = get()) }
+
     // Use cases MUST only depend on domain interfaces (repositories, notifiers).
     factory { LoginUseCase(repository = get(), tokenRepository = get(), authNotifier = get()) }
     factory { LogoutUseCase(repository = get(), tokenRepository = get(), authNotifier = get()) }
     factory { GetUserProfileUseCase(repository = get()) }
-    
-    // Logic for app startup
-    factory { BootstrapAppUseCase(tokenRepository = get(), authNotifier = get()) }
+    factory { GetMyProfileUseCase(repository = get()) }
 }
 
 val presentationModule = module {

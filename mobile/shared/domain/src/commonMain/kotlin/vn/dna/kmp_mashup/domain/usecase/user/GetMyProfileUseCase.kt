@@ -6,13 +6,13 @@ import vn.dna.kmp_mashup.domain.model.error.FailureException
 import vn.dna.kmp_mashup.domain.repository.user.UserRepository
 import vn.dna.kmp_mashup.domain.usecase.base.BaseUseCase
 
-class GetUserProfileUseCase(
+class GetMyProfileUseCase(
     private val repository: UserRepository
-) : BaseUseCase<String, UserEntity>() {
+) : BaseUseCase<Unit, UserEntity>() {
     // Use cases should always return Result<Entity>
-    override suspend fun execute(params: String): Result<UserEntity> {
+    override suspend fun execute(params: Unit): Result<UserEntity> {
         // 1) Call repository (returns Result<UserEntity>)
-        val result = repository.getUserProfile(params)
+        val result = repository.getMyProfile()
         // 2) Transform result with mapCatching
         return result.mapCatching { user ->
             // When result is Success, this block runs.

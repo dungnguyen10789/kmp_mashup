@@ -38,4 +38,21 @@ class UserRepositoryImpl(
             )
         }
     }
+
+    override suspend fun getUserProfile(id: String): Result<UserEntity> {
+        return safeApiCall<UserDTO> {
+            httpClient.get("users/$id")
+        }.map { dto ->
+            // Map DTO -> Domain Entity
+            // This decoupling ensures that API changes (e.g., field renaming)
+            // only require changes in this mapping logic, not the whole app.
+            UserEntity(
+                id = dto.id,
+                username = dto.username,
+                fullName = dto.fullname,
+                email = dto.email,
+                gender = dto.gender
+            )
+        }
+    }
 }

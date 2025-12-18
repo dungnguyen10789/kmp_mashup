@@ -5,13 +5,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import vn.dna.kmp_mashup.domain.entity.user.UserEntity
 import vn.dna.kmp_mashup.domain.model.error.Failure
+import vn.dna.kmp_mashup.domain.usecase.user.GetMyProfileUseCase
 import vn.dna.kmp_mashup.domain.usecase.user.GetUserProfileUseCase
 import vn.dna.kmp_mashup.presentation.model.UIState
 import vn.dna.kmp_mashup.presentation.platform.toFailure
 import vn.dna.kmp_mashup.presentation.viewmodel.base.BaseViewModel
 
 class UserProfileViewModel(
-    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val getMyProfileUseCase: GetMyProfileUseCase
 ) : BaseViewModel() {
     private val _uiState = MutableStateFlow<UIState<UserEntity>>(UIState.Idle)
     val uiState: StateFlow<UIState<UserEntity>> = _uiState
@@ -22,7 +23,7 @@ class UserProfileViewModel(
 
             try {
                 // 1) Call use case (returns UserEntity directly)
-                val user = getUserProfileUseCase.invoke()
+                val user = getMyProfileUseCase.invoke(params = Unit)
 
                 // If successful, emit UiState.Success
                 _uiState.value = UIState.Success(user)
